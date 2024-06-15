@@ -20,8 +20,8 @@
     { "site-package": "hikvisionapi" },
     { "site-package": "httpx" },
     { "site-package": "packaging" },
-    { "site-package": "pyunifiprotect" },
     { "site-package": "reolinkapi" },
+    { "site-package": "uiprotect" },
     { "site-package": "websockets" },
     { "site-package": "yarl" }
   ],

@@ -5,7 +5,7 @@ import sys
 from shutil import which
 
 import coloredlogs
-from pyunifiprotect import ProtectApiClient
+from uiprotect import ProtectApiClient
 
 from unifi.cams import (
     DahuaCam,
