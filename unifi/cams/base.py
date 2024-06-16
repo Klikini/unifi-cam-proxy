@@ -919,6 +919,18 @@ class UnifiCamBase(metaclass=ABCMeta):
 
         return " ".join(base_args)
 
+    async def get_ffmpeg_stream_command(self, stream_index: str, stream_name: str, destination: tuple[str, int]):
+        return (
+            "ffmpeg -nostdin -loglevel error -y"
+            f" {self.get_base_ffmpeg_args(stream_index)} -rtsp_transport"
+            f' {self.args.rtsp_transport} -i "{await self.get_stream_source(stream_index)}"'
+            f" {self.get_extra_ffmpeg_args(stream_index)} -metadata"
+            f" streamName={stream_name} -f flv - | {sys.executable} -m"
+            " unifi.clock_sync"
+            f" {'--write-timestamps' if self._needs_flv_timestamps else ''} | nc"
+            f" {destination[0]} {destination[1]}"
+        )
+
     async def start_video_stream(
         self, stream_index: str, stream_name: str, destination: tuple[str, int]
     ):
@@ -926,17 +938,7 @@ class UnifiCamBase(metaclass=ABCMeta):
         is_dead = has_spawned and self._ffmpeg_handles[stream_index].poll() is not None
 
         if not has_spawned or is_dead:
-            source = await self.get_stream_source(stream_index)
-            cmd = (
-                "ffmpeg -nostdin -loglevel error -y"
-                f" {self.get_base_ffmpeg_args(stream_index)} -rtsp_transport"
-                f' {self.args.rtsp_transport} -i "{source}"'
-                f" {self.get_extra_ffmpeg_args(stream_index)} -metadata"
-                f" streamName={stream_name} -f flv - | {sys.executable} -m"
-                " unifi.clock_sync"
-                f" {'--write-timestamps' if self._needs_flv_timestamps else ''} | nc"
-                f" {destination[0]} {destination[1]}"
-            )
+            cmd = await self.get_ffmpeg_stream_command(stream_index, stream_name, destination)
 
             if is_dead:
                 self.logger.warn(f"Previous ffmpeg process for {stream_index} died.")
